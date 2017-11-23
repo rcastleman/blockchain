@@ -32,9 +32,14 @@ class Blockchain (object):
 			'proof':proof,
 			'previous_hash':previous_hash or self.hash(self.chain[-1]),
 		}
+		# Reset current list of transactions
+		self.current_transactions = []
+
+		self.chain.append(block)
+
+		return block
 
 	def new_transaction(self,sender,recipient,amount):
-		 # adds new transaction to the transaction 
 		 """
 
 		 Creates a new transaction to go into 
@@ -46,6 +51,7 @@ class Blockchain (object):
 		 :return: <int> index of the block that will hold this transaction 
 		 
 		 """
+
 		 self.current_transactions.append({
 		 	'sender':sender,
 		 	'recipient':recipient,
@@ -54,11 +60,26 @@ class Blockchain (object):
 
 		 return self.last_block['index'] + 1
 
+	@property 
+	def last_block(self):
+		return self.chain[-1]
+
 
 	@staticmethod
-	def hah(block):
-		# hashes a block
-		pass
+	def hash(block):
+		"""
+		Creates a SHA-256 hash of a block
+
+		:param block: <dict> Block
+		:return: <str>
+
+		"""
+		# Make sure Dictionary is ordered or there will be inconsistent hashes
+		
+
+		block_string = json.dumps(block,sort_keys = True).encode()
+		return hashlib.sha256(block_string).hexdigest()
+
 
 	@property
 	def last_block(self):
