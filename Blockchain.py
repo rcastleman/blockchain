@@ -3,12 +3,13 @@
 
 import hashlib
 import json
-
 from textwrap import dedent
 from time import time
+from urllib.parse import urlparse
 from uuid import uuid4
 
-from flask import Flask,jasonify, request
+# import requests
+from flask import Flask, jsonify, request
 
 
 
@@ -73,7 +74,7 @@ class Blockchain (object):
 		:return: <bool> True if correct, False if incorrect
 		"""
 
-		guess = f'{last_proof}[proof}'.encode()
+		guess = f'{last_proof}{proof}'.encode()
 		guess_hash = hashlib.sha256(guess).hexdigest()
 		return guess_hash[:4] == "0000"
 
@@ -124,70 +125,70 @@ class Blockchain (object):
 		# returns the last Block in the chain
 		pass
 
-	# instantiate our Node
-	app = flask(__name__)
+# instantiate our Node
+app = Flask(__name__)
 
-	# Generate a globally unique address for this node
-	node_identifier = str(uuid4()).replace('-','')
+# Generate a globally unique address for this node
+node_identifier = str(uuid4()).replace('-','')
 
-	# instantiate the Blockchain
-	blockchain = Blockchain()
+# instantiate the Blockchain
+blockchain = Blockchain()
 
-	@app.route('/mine',methods=['GET'])
-	def mine():
-		#We run the proof of work algorithm to get the next proof
-		last_block = blockchain.last_block
-		last_proof = last_block['proof']
-		proof = blockchain.proof_of_work(last_proof)
+@app.route('/mine', methods=['GET'])
+def mine():
+    # We run the proof of work algorithm to get the next proof...
+    last_block = blockchain.last_block
+    last_proof = last_block['proof']
+    proof = blockchain.proof_of_work(last_proof)
 
-		# we must receive a reward for finding a proof
-		# the sender is "0" to signify that this node has mined a new coin
-		blockchain.new_transaction(
-			sender = "0",
-			recipient = node_identifier,
-			amount = 1,
-		)
+    # We must receive a reward for finding the proof.
+    # The sender is "0" to signify that this node has mined a new coin.
+    blockchain.new_transaction(
+        sender="0",
+        recipient=node_identifier,
+        amount=1,
+    )
 
-		# forge the new Block by adding it to the chain
-		previous_hash = blockchain.hash(last_block)
-		block = blockchain.new_block(proof,previous_hash)
+    # Forge the new Block by adding it to the chain
+    previous_hash = blockchain.hash(last_block)
+    block = blockchain.new_block(proof, previous_hash)
 
-		response = {
-			'message':"New Block Forged",
-			'index':block['index'],
-			'transactions':block['transactions'],
-			'proof':block['proof'],
-			'previous_hash':block[previous_hash],
-		}
-		return jasonify(response), 200
-
-
-
-	@app.route('/transactions/new',methods=['POST'])
-	def new_transaction():
-		values = request.get_jason()
-
-		# check that required fields are in the POSTed data
-		required = ['sender','recipient','amount']
-		if not all(k in values for k in required):
-			return 'Missing values', 400
-
-		#create a new Transaction
-		index = blockchain.new_transaction(values['sender'],values['recipient']),values['amount'])
-
-		response = {'message': f'Transaction will be added to Blockchain {index}'}
-		return jasonify(response), 201
+    response = {
+        'message': "New Block Forged",
+        'index': block['index'],
+        'transactions': block['transactions'],
+        'proof': block['proof'],
+        'previous_hash': block['previous_hash'],
+    }
+    return jsonify(response), 200
 
 
-	@app.route('/chain',methods = ['GET'])
-	def full_chain():
-		response = {
-			'chain':blockchain.chain,
-			'length':len(blockchain.chain),
-		}
-		return jsonify(respone),200
 
-	if __name__ == '__main__':
-		app.run(host='0.0.0.0',port=5000)
+@app.route('/transactions/new',methods=['POST'])
+def new_transaction():
+	values = request.get_jason()
+
+	# check that required fields are in the POSTed data
+	required = ['sender','recipient','amount']
+	if not all(k in values for k in required):
+		return 'Missing values', 400
+
+	#create a new Transaction
+	index = blockchain.new_transaction(values['sender'], values['recipient'], values['amount'])
+
+	response = {'message': f'Transaction will be added to Blockchain {index}'}
+	return jasonify(response), 201
+
+
+@app.route('/chain',methods = ['GET'])
+def full_chain():
+	response = {
+		'chain':blockchain.chain,
+		'length':len(blockchain.chain),
+	}
+	return jsonify(respone),200
+
+if __name__ == '__main__':
+	app.run(host='0.0.0.0',port=5000)
 
 

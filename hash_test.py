@@ -2,7 +2,7 @@
 
 from hashlib import sha256
 
-x = 5
+x = 9
 y = 0
 
 # while sha256(f'{x*y}'.encode()).hexdigest()[-1] !="0":
