@@ -73,7 +73,7 @@ class Blockchain (object):
 		:return: <bool> True if correct, False if incorrect
 		"""
 
-		guess = f'{last_proof}[proof]'.encode()
+		guess = f'{last_proof}[proof}'.encode()
 		guess_hash = hashlib.sha256(guess).hexdigest()
 		return guess_hash[:4] == "0000"
 
@@ -160,7 +160,7 @@ class Blockchain (object):
 			'previous_hash':block[previous_hash],
 		}
 		return jasonify(response), 200
-		
+
 
 
 	@app.route('/transactions/new',methods=['POST'])
