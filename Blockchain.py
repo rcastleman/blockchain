@@ -3,6 +3,7 @@
 
 import hashlib
 import json
+
 from textwrap import dedent
 from time import time
 from uuid import uuid4
@@ -134,7 +135,33 @@ class Blockchain (object):
 
 	@app.route('/mine',methods=['GET'])
 	def mine():
-		return "We'll mine a new Block"
+		#We run the proof of work algorithm to get the next proof
+		last_block = blockchain.last_block
+		last_proof = last_block['proof']
+		proof = blockchain.proof_of_work(last_proof)
+
+		# we must receive a reward for finding a proof
+		# the sender is "0" to signify that this node has mined a new coin
+		blockchain.new_transaction(
+			sender = "0",
+			recipient = node_identifier,
+			amount = 1,
+		)
+
+		# forge the new Block by adding it to the chain
+		previous_hash = blockchain.hash(last_block)
+		block = blockchain.new_block(proof,previous_hash)
+
+		response = {
+			'message':"New Block Forged",
+			'index':block['index'],
+			'transactions':block['transactions'],
+			'proof':block['proof'],
+			'previous_hash':block[previous_hash],
+		}
+		return jasonify(response), 200
+		
+
 
 	@app.route('/transactions/new',methods=['POST'])
 	def new_transaction():
@@ -150,7 +177,7 @@ class Blockchain (object):
 
 		response = {'message': f'Transaction will be added to Blockchain {index}'}
 		return jasonify(response), 201
-			
+
 
 	@app.route('/chain',methods = ['GET'])
 	def full_chain():
