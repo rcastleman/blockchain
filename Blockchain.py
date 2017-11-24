@@ -4,6 +4,7 @@
 import hashlib
 import json
 from time import time
+from uuid import uuid4
 
 
 class Blockchain (object):
@@ -38,6 +39,38 @@ class Blockchain (object):
 		self.chain.append(block)
 
 		return block
+
+	def proof_of_work(self,last_proof):
+		"""
+		Simple Proof of Work algorithm
+		- find 'p' such that hash(pp') contains four leading zeros
+		and where p is the previous p'
+		- p is the previous proof
+		- p' is the new proof
+
+		:param last_proof: <int>
+		:return: <int>
+		"""
+
+		proof = 0
+		while self.valid_proof(last_proof,proof) is False:
+			proof += 1
+
+		return proof
+
+	@staticmethod
+	def valid_proof(last_proof,proof):
+		"""
+		Validates the Proof: does hash(last_proof,proof) contain four leading zeros?
+
+		:param last_proof: <int> previous proof
+		:param proof: <int> current proof
+		:return: <bool> True if correct, False if incorrect
+		"""
+
+		guess = f'{last_proof}[proof]'.encode()
+		guess_hash = hashlib.sha256(guess).hexdigest()
+		return guess_hash[:4] == "0000"
 
 	def new_transaction(self,sender,recipient,amount):
 		 """
@@ -75,7 +108,7 @@ class Blockchain (object):
 
 		"""
 		# Make sure Dictionary is ordered or there will be inconsistent hashes
-		
+
 
 		block_string = json.dumps(block,sort_keys = True).encode()
 		return hashlib.sha256(block_string).hexdigest()
@@ -85,3 +118,7 @@ class Blockchain (object):
 	def last_block(self):
 		# returns the last Block in the chain
 		pass
+
+	
+
+
